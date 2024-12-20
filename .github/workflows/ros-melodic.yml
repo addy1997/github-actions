@@ -1,44 +1,47 @@
-name: ROS Melodic CI
+name: Run tests in simulation
 
+# We only want these changes to run when we push to the main branch
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
+# Let's default to the burger variant of Turtlebot
+env:
+  TURTLEBOT3_MODEL: burger
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-18.04
-
+  simulation:
+    # All steps inside this job will run inside the ROS Melodic container
+    container: public.ecr.aws/docker/library/ros:melodic-robot
+    runs-on: ubuntu-latest
+    # Let's ensure we use bash, and work within our catkin worksapce
+    defaults:
+      run:
+        shell: bash
+        working-directory: catkin_ws/
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Check out the code
+      - uses: actions/checkout@v2
 
-    - name: Set up ROS
-      run: |
-        sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-        sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key F42ED6FBAB17C654
-        sudo apt update
-        sudo apt install -y ros-melodic-desktop-full
-        echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
-        source /opt/ros/melodic/setup.bash
-        sudo apt install -y python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
-        sudo rosdep init
-        rosdep update
+      # Install the Turtlebot and Gazebo packages
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y \
+            ros-melodic-turtlebot3 \
+            ros-melodic-turtlebot3-simulations \
+            ros-melodic-gazebo-ros-pkgs \
+            ros-melodic-gazebo-ros-control
 
-    - name: Setup ROS workspace
-      run: |
-        mkdir -p ~/ros_ws/src
-        cd ~/ros_ws/src
-        ln -s $GITHUB_WORKSPACE .
-        cd ~/ros_ws
-        rosdep install --from-paths src --ignore-src -r -y
-        catkin_make
+      # Build our workspace
+      - name: Build workspace
+        run: |
+          source /opt/ros/melodic/setup.bash
+          catkin_make
 
-    - name: Run tests
-      run: |
-        source ~/ros_ws/devel/setup.bash
-        catkin_make run_tests
-        catkin_test_results
+      # Run our ROS test!
+      - name: Run tests
+        run: |
+          source devel/setup.bash &&
+          rostest my_turtlebot_sim my_turtlebot_sim.test --text
