@@ -20,7 +20,7 @@ jobs:
           mkdir -p build && cd build
           cmake /usr/src/googletest
           make
-          cp lib/libgtest* /usr/lib/
+          sudo cp lib/libgtest* /usr/lib/
 
       - name: Build Project
         run: |
