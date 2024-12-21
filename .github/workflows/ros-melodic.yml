@@ -16,20 +16,20 @@ jobs:
 
       - name: Install ROS Dependencies
         run: |
-          apt-get update -qq && \
-          apt-get install -qq -y curl gpg-agent && \
-          sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
+          sudo apt-get update -qq && \
+          sudo apt-get install -qq -y curl gpg-agent && \
+          sudo  sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
           curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-          apt-get update -qq && \
-          apt-get install -qq -y ros-noetic-desktop-full && \
+          sudo apt-get update -qq && \
+          sudo  apt-get install -qq -y ros-noetic-desktop-full && \
           echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc && \
-          apt-get install -qq -y python3-rosdep python3-catkin-tools && \
+          sudo apt-get install -qq -y python3-rosdep python3-catkin-tools && \
           rosdep init && \
           rosdep update
 
       - name: Install gTest
         run: |
-          apt-get install -y libgtest-dev cmake
+          sudo apt-get install -y libgtest-dev cmake
           mkdir -p build && cd build
           cmake /usr/src/googletest
           make
