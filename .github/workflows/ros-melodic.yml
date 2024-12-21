@@ -14,19 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install ROS Dependencies
-        run: |
-          sudo apt-get update -qq && \
-          sudo apt-get install -qq -y curl gpg-agent && \
-          sudo  sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
-          curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-          sudo apt-get update -qq && \
-          sudo  apt-get install -qq -y ros-noetic-desktop-full && \
-          echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc && \
-          sudo apt-get install -qq -y python3-rosdep python3-catkin-tools && \
-          rosdep init && \
-          rosdep update
-
       - name: Install gTest
         run: |
           sudo apt-get install -y libgtest-dev cmake
