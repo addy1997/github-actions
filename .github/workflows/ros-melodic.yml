@@ -9,21 +9,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install ROS Melodic
+      - name: Install ROS Dependencies
         run: |
           apt-get update -qq && \
           apt-get install -qq -y curl gpg-agent && \
-          sh -c 'echo "deb http://packages.ros.org/ros/ubuntu bionic main" > /etc/apt/sources.list.d/ros-latest.list' && \
+          sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
           curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
           apt-get update -qq && \
-          apt-get install -qq -y ros-melodic-desktop-full && \
-          echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc && \
-          apt-get install -qq -y python-rosdep python-catkin-tools && \
+          apt-get install -qq -y ros-noetic-desktop-full && \
+          echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc && \
+          apt-get install -qq -y python3-rosdep python3-catkin-tools && \
           rosdep init && \
           rosdep update
 
@@ -35,12 +35,8 @@ jobs:
           make
           cp lib/libgtest* /usr/lib/
 
-      - name: Setup ROS Environment
-        run: |
-          echo "source /opt/ros/melodic/setup.bash" >> $GITHUB_ENV
-
       - name: Build Project
         run: |
-          source /opt/ros/melodic/setup.bash
+          source /opt/ros/noetic/setup.bash
           cmake --preset default
           cmake --build --preset default --config Debug --target install
