@@ -9,48 +9,35 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Check out the repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Install ROS Melodic and dependencies
-      - name: Install ROS Melodic
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qq -y curl gnupg2 lsb-release
-          sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-          curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-          sudo apt-get update -qq
-          sudo apt-get install -qq -y ros-melodic-desktop-full
-          echo "source /opt/ros/melodic/setup.bash" >> $GITHUB_ENV
-          sudo apt-get install -qq -y python-rosdep python-catkin-tools
-          sudo rosdep init
-          rosdep update
+      # Step 2: Set up Docker
+      - name: Run Docker Container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: osrf/ros:melodic-desktop-full
+          options: --rm --privileged
+          run: |
+            # Update package lists and initialize rosdep
+            apt-get update -qq
+            apt-get install -qq -y python-rosdep python-catkin-tools
+            rosdep init
+            rosdep update
 
-      # Step 3: Install Google Test (gTest)
-      - name: Install gTest
-        run: |
-          sudo apt-get install -y libgtest-dev cmake
-          mkdir -p $HOME/build
-          cd $HOME/build
-          sudo cmake /usr/src/googletest
-          sudo make
-          sudo cp lib/libgtest* /usr/lib/
-          cd ..
-          sudo rm -rf $HOME/build
+            # Source ROS environment
+            source /opt/ros/melodic/setup.bash
 
-      # Step 4: Set up the ROS environment
-      - name: Setup ROS Environment
-        run: |
-          echo "source /opt/ros/melodic/setup.bash" >> $GITHUB_ENV
-          echo "ROS environment set up."
+            # Build the project (adjust to your build system)
+            mkdir -p ~/catkin_ws/src
+            cp -r . ~/catkin_ws/src/
+            cd ~/catkin_ws
+            catkin_make
 
-      # Step 5: Build the project using CMake
-      - name: Build Project
-        run: |
-          source /opt/ros/melodic/setup.bash
-          cmake .
-          make
+            # Run tests
+            catkin_make run_tests
+            catkin_test_results
