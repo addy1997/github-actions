@@ -9,38 +9,47 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Check out the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Install ROS Melodic
+      # Step 2: Install ROS Noetic and dependencies
+      - name: Install ROS Noetic
         run: |
-          apt-get update -qq && \
-          apt-get install -qq -y curl gpg-agent && \
-          sh -c 'echo "deb http://packages.ros.org/ros/ubuntu bionic main" > /etc/apt/sources.list.d/ros-latest.list' && \
-          curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-          apt-get update -qq && \
-          apt-get install -qq -y ros-melodic-desktop-full && \
-          echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc && \
-          apt-get install -qq -y python-rosdep python-catkin-tools && \
-          rosdep init && \
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y curl gnupg2 lsb-release
+          sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+          curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y ros-noetic-desktop-full
+          echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+          source /opt/ros/noetic/setup.bash
+          sudo apt-get install -qq -y python3-rosdep python3-catkin-tools
+          sudo rosdep init
           rosdep update
 
+      # Step 3: Install Google Test (gTest)
       - name: Install gTest
         run: |
-          apt-get install -y libgtest-dev cmake
-          mkdir -p build && cd build
-          cmake /usr/src/googletest
-          make
-          cp lib/libgtest* /usr/lib/
+          sudo apt-get install -y libgtest-dev cmake
+          mkdir -p $HOME/build
+          cd $HOME/build
+          sudo cmake /usr/src/googletest
+          sudo make
+          sudo cp lib/libgtest* /usr/lib/
+          cd ..
+          sudo rm -rf $HOME/build
 
+      # Step 4: Set up the ROS environment
       - name: Setup ROS Environment
         run: |
-          echo "source /opt/ros/melodic/setup.bash" >> $GITHUB_ENV
+          echo "source /opt/ros/noetic/setup.bash" >> $GITHUB_ENV
+          echo "ROS environment set up."
 
+      # Step 5: Build the project using CMake
       - name: Build Project
         run: |
-          source /opt/ros/melodic/setup.bash
-          cmake --preset default
-          cmake --build --preset default --config Debug --target install
+          source /opt/ros/noetic/setup.bash
